@@ -1,15 +1,18 @@
-# Hand Puck
+# Air Juggler
 
-Hand Puck is a small React app where you use your webcam to track your hand.
-Your index finger moves a puck on the screen, and simple hand gestures change
-the state shown in the control panel.
+Air Juggler is a small React webcam game built for teaching.
+Your index finger controls the paddle, and a pinch gesture "hits" the ball
+upward so you can keep it in the air.
 
-You can use this as a starting point for building your own webcam hand gesture
-experiments.
+The code stays intentionally simple, so students can follow the full input-to-
+interaction flow and modify it in class.
 
 After you can run the app, read the sections `How to Add Your Own Gesture` and
 `Project Ideas`. They show you where to change the code and give you ideas for
 what to build next.
+
+If you are teaching this as a build path from the template project, use
+`IMPLEMENTATION_GUIDE.md` for a phase-by-phase implementation roadmap.
 
 ## What You Should Focus On
 
