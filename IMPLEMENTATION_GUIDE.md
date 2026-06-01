@@ -1,88 +1,118 @@
-# Air Juggler Step-by-Step Implementation Guide
+# Air Juggler Implementation Guide
 
-This guide shows you how to build Air Juggler from the template project.
+This guide helps you build the Air Juggler game step by step.
 
-You start from:
+You start from the template:
 
 - https://github.com/cederdorff/webcam-ui
 
-You should implement these files:
+You end with the Air Juggler game in this repository.
 
-- src/gestures.js
-- src/hooks/useHandTracking.js
-- src/components/TrackingStage.jsx
-- src/components/ControlPanel.jsx
-- src/App.jsx
-- src/App.css
+## Big Picture: What You Are Building
 
-You should not need to change these files:
+You are building a small real-time input system.
 
-- src/handTracking.js
-- src/components/StatusPill.jsx
-- src/index.css
+The full flow is:
 
-## Step 0: Create the Project From the Template
+1. Your webcam provides video frames.
+2. MediaPipe detects hand landmarks in each frame.
+3. Gesture logic converts landmarks into simple values (`isPinching`, `grip`, `indexTip`).
+4. Game logic uses those values to move the puck and update ball physics.
+5. React renders the updated state (score, lives, status, and visuals).
 
-1. Create your own repository from the template link.
-2. Clone it locally.
-3. Install dependencies and start development:
+If something breaks, check this pipeline one step at a time instead of debugging everything at once.
+
+## What You Will Implement
+
+You implement these files:
+
+- `src/gestures.js`
+- `src/hooks/useHandTracking.js`
+- `src/components/TrackingStage.jsx`
+- `src/components/ControlPanel.jsx`
+- `src/App.jsx`
+- `src/App.css`
+
+Step-to-file map:
+
+- Step 1 -> `src/gestures.js`
+- Step 2 -> `src/hooks/useHandTracking.js`
+- Step 3 -> `src/components/TrackingStage.jsx`
+- Step 4 -> `src/components/ControlPanel.jsx`
+- Step 5 -> `src/App.jsx`
+- Step 6 -> `src/App.css`
+
+## Step 0: Create and Run the Template
+
+In this step, you are setting up a clean starting point.
+Do not skip this. If the template does not run before edits, it becomes much harder to know whether errors come from your changes or from setup issues.
+
+Open the template repository in your browser:
+
+- [https://github.com/cederdorff/webcam-ui](https://github.com/cederdorff/webcam-ui)
+
+Click `Use this template`.
+
+Choose `Create a new repository`.
+
+Give your repository a clear name.
+
+Create the repository. Now you have your own copy of the project on your GitHub account.
+
+On your new GitHub repository page, click the green `Code` button.
+
+If you use GitHub Desktop:
+
+1. Choose `Open with GitHub Desktop`.
+2. Choose where to save the project on your computer.
+3. Click `Clone`.
+4. Click `Open in Visual Studio Code`.
+
+Open the project folder in VS Code.
+
+Open a terminal in VS Code:
+
+```text
+Terminal -> New Terminal
+```
+
+Install the project dependencies:
 
 ```bash
 npm install
+```
+
+This downloads the code libraries the project needs.
+
+Start the development server:
+
+```bash
 npm run dev
 ```
 
-4. Open the app in the browser and confirm webcam permission works.
+Confirm the template works before you make changes.
 
-## Step 1: Implement Gesture Logic in src/gestures.js
+Why this matters:
 
-Goal: Convert hand landmarks into a stable gameplay control object.
+- You verify your environment (Node, npm, webcam permissions) is correct.
+- You create a stable baseline before implementing game features.
 
-### 1.1 Add landmark constants
+## Step 1: Update Gesture Output (src/gestures.js)
 
-```js
-const LANDMARK = {
-  WRIST: 0,
-  THUMB_TIP: 4,
-  INDEX_BASE: 5,
-  INDEX_TIP: 8,
-  MIDDLE_BASE: 9,
-  MIDDLE_TIP: 12,
-  RING_BASE: 13,
-  RING_TIP: 16,
-  PINKY_BASE: 17,
-  PINKY_TIP: 20
-};
-```
+File you edit in this step: `src/gestures.js`.
 
-### 1.2 Implement getHandGesture(landmarks)
+Action now: Open `src/gestures.js` and make the change below.
 
-```js
-export function getHandGesture(landmarks) {
-  const wrist = landmarks[LANDMARK.WRIST];
-  const thumbTip = landmarks[LANDMARK.THUMB_TIP];
-  const indexTip = landmarks[LANDMARK.INDEX_TIP];
-  const middleBase = landmarks[LANDMARK.MIDDLE_BASE];
+In the template, `movePuckWithGesture` updates puck styles but does not return the puck position.
 
-  const pinchDistance = getDistance(indexTip, thumbTip);
-  const grip = clamp(1 - (pinchDistance - 0.035) / 0.11, 0, 1);
-  const isPinching = grip > 0.6;
-  const isPointingUp = indexTip.y < wrist.y;
-  const openFingerCount = countOpenFingers(landmarks);
+You need it to return `{ x, y }` so game physics can use the current puck coordinates.
 
-  return {
-    grip,
-    indexTip,
-    isOpenHand: openFingerCount >= 4,
-    isPinching,
-    isPointingUp,
-    name: getGestureName({ isPinching, isPointingUp, openFingerCount }),
-    rotation: clamp((middleBase.x - wrist.x) * -115, -34, 34)
-  };
-}
-```
+Think of this as connecting two systems:
 
-### 1.3 Implement movePuckWithGesture(gesture, puck)
+- Gesture system decides where the puck should be.
+- Game system needs that position to decide whether the ball was hit.
+
+### Change
 
 ```js
 export function movePuckWithGesture(gesture, puck) {
@@ -102,53 +132,51 @@ export function movePuckWithGesture(gesture, puck) {
   puck.toggleAttribute("data-gripped", gesture.isPinching);
   puck.removeAttribute("data-searching");
 
-  return { x: nextX, y: nextY };
-}
-```
-
-### 1.4 Add helper functions
-
-```js
-function getGestureName({ isPinching, isPointingUp, openFingerCount }) {
-  if (isPinching) return "Pinch";
-  if (openFingerCount >= 4) return "Open hand";
-  if (isPointingUp) return "Pointing up";
-  return "Tracking";
-}
-
-function countOpenFingers(landmarks) {
-  const openFingers = [
-    landmarks[LANDMARK.INDEX_TIP].y < landmarks[LANDMARK.INDEX_BASE].y,
-    landmarks[LANDMARK.MIDDLE_TIP].y < landmarks[LANDMARK.MIDDLE_BASE].y,
-    landmarks[LANDMARK.RING_TIP].y < landmarks[LANDMARK.RING_BASE].y,
-    landmarks[LANDMARK.PINKY_TIP].y < landmarks[LANDMARK.PINKY_BASE].y
-  ];
-
-  return openFingers.filter(Boolean).length;
-}
-
-function getDistance(pointA, pointB) {
-  return Math.hypot(pointA.x - pointB.x, pointA.y - pointB.y);
-}
-
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max);
+  return {
+    x: nextX,
+    y: nextY
+  };
 }
 ```
 
 Checkpoint:
 
-- You can log gesture values and see stable `name`, `grip`, and `isPinching`.
+- Your gesture behavior is unchanged.
+- You now get puck coordinates back from `movePuckWithGesture`.
 
-## Step 2: Implement Runtime + Game Loop in src/hooks/useHandTracking.js
+Test now (before continuing):
 
-Goal: Build camera lifecycle, tracking loop, and game physics.
+1. Save `src/gestures.js`.
+2. Confirm the app still runs with no compile errors.
+3. If the stage is running, confirm puck tracking still works.
+
+If your score never changes later, this is one of the first places to re-check.
+
+## Step 2: Add Game State + Physics (src/hooks/useHandTracking.js)
+
+File you edit in this step: `src/hooks/useHandTracking.js`.
+
+Action now: Open `src/hooks/useHandTracking.js`.
+All substeps in Step 2 are changes in this same file.
+
+This is the biggest change in the commit.
+
+In the template, this hook tracks hand state only.
+In Air Juggler, it also manages a ball game loop (score, lives, collisions).
+
+You can think of this hook as the game engine.
+It runs every frame and decides both tracking state and game state.
 
 ### 2.1 Add refs and state
 
+Add `ballRef`, `gameRef`, and `game` state.
+
+Why both `gameRef` and `game` state?
+
+- `gameRef` stores mutable values that change every animation frame without causing rerenders.
+- `game` state stores a UI snapshot so React can render score/lives efficiently.
+
 ```js
-const webcamRef = useRef(null);
-const canvasRef = useRef(null);
 const puckRef = useRef(null);
 const ballRef = useRef(null);
 const handLandmarkerRef = useRef(null);
@@ -161,34 +189,18 @@ const [tracking, setTracking] = useState(READY_STATUS);
 const [game, setGame] = useState(() => createGameSnapshot(gameRef.current));
 ```
 
-### 2.2 Implement start and stop
+### 2.2 Add reset behavior
+
+Still editing `src/hooks/useHandTracking.js`.
+
+Add `resetGame()` and update `stopCamera()` to hide the ball.
+
+This gives you predictable round boundaries:
+
+- `stopCamera()` resets runtime visuals.
+- `resetGame()` starts a fresh round while keeping `bestScore`.
 
 ```js
-async function startCamera() {
-  if (isRunning || tracking.mode === "loading") return;
-
-  if (!navigator.mediaDevices?.getUserMedia) {
-    setTracking(createErrorStatus("Camera unavailable"));
-    return;
-  }
-
-  setTracking({ ...READY_STATUS, mode: "loading", label: "Loading model" });
-
-  try {
-    if (!handLandmarkerRef.current) {
-      handLandmarkerRef.current = await createHandLandmarker();
-    }
-
-    resetGame();
-    setIsRunning(true);
-    setTracking(createSearchingStatus());
-  } catch (error) {
-    console.error(error);
-    stopCamera();
-    setTracking(createErrorStatus(getCameraErrorLabel(error)));
-  }
-}
-
 function stopCamera() {
   cancelAnimationFrame(animationRef.current);
   animationRef.current = 0;
@@ -200,52 +212,61 @@ function stopCamera() {
   setIsRunning(false);
   setTracking(READY_STATUS);
 }
-```
 
-### 2.3 Implement the frame loop
+function resetGame() {
+  const nextGame = createInitialGame(gameRef.current.bestScore);
 
-```js
-function runFrameLoop() {
-  const video = webcamRef.current?.video;
-  const canvas = canvasRef.current;
-  const puck = puckRef.current;
-  const ball = ballRef.current;
-  const handLandmarker = handLandmarkerRef.current;
-
-  if (!video || !canvas || !puck || !ball || !handLandmarker) return;
-
-  resizeCanvasToVideo(canvas, video);
-
-  if (hasNewVideoFrame(video, lastVideoTimeRef.current)) {
-    lastVideoTimeRef.current = video.currentTime;
-    const results = handLandmarker.detectForVideo(video, performance.now());
-    const landmarks = results.landmarks?.[0];
-
-    if (landmarks) {
-      drawHand(canvas, landmarks);
-      const gesture = getHandGesture(landmarks);
-      const puckPosition = movePuckWithGesture(gesture, puck);
-      const didUpdateScore = tickGame(gameRef.current, ball, puckPosition, gesture);
-
-      if (didUpdateScore) {
-        setGame(createGameSnapshot(gameRef.current));
-      }
-
-      setTracking(createTrackingStatus(results, gesture));
-    } else {
-      clearCanvas(canvas);
-      showSearchingPuck(puck);
-      setTracking(createSearchingStatus());
-    }
-  }
-
-  animationRef.current = requestAnimationFrame(runFrameLoop);
+  gameRef.current = nextGame;
+  placeBall(ballRef.current, nextGame);
+  setGame(createGameSnapshot(nextGame));
 }
 ```
 
-### 2.4 Implement game logic helpers
+### 2.3 Update frame loop
 
-Use these helpers:
+Still editing `src/hooks/useHandTracking.js`.
+
+Use returned puck coordinates and run game physics on every tracked frame.
+
+Important mental model:
+
+- Tracking gives you input.
+- Physics consumes that input.
+- UI is updated only when needed.
+
+```js
+const puckPosition = movePuckWithGesture(gesture, puck);
+
+const didUpdateScore = tickGame(gameRef.current, ball, puckPosition, gesture);
+
+if (didUpdateScore) {
+  setGame(createGameSnapshot(gameRef.current));
+}
+```
+
+### 2.4 Start game with reset
+
+Still editing `src/hooks/useHandTracking.js`.
+
+In `startCamera()`, reset game before tracking starts:
+
+This ensures the first visible frame already has valid ball state.
+
+```js
+if (!handLandmarkerRef.current) {
+  handLandmarkerRef.current = await createHandLandmarker();
+}
+
+resetGame();
+setIsRunning(true);
+setTracking(createSearchingStatus());
+```
+
+### 2.5 Add full game helper functions
+
+Still editing `src/hooks/useHandTracking.js`.
+
+Add these functions exactly as part of the hook module:
 
 - `createInitialGame(bestScore = 0)`
 - `createGameSnapshot(game)`
@@ -254,8 +275,10 @@ Use these helpers:
 - `placeBall(ball, game)`
 - `hideBall(ball)`
 - `updateBallElement(ball, x, y, didHit)`
+- `randomInRange(min, max)`
+- `clamp(value, min, max)`
 
-Example hit detection section:
+Example from `tickGame` (pinch hit + scoring):
 
 ```js
 const now = performance.now();
@@ -274,7 +297,19 @@ if (gesture.isPinching && distance < 0.12 && canHit) {
 }
 ```
 
-### 2.5 Return your hook API
+What `tickGame` is responsible for:
+
+- Apply gravity and velocity.
+- Keep the ball inside allowed bounds.
+- Detect pinch hits and apply bounce impulse.
+- Handle lives and round reset.
+- Reflect game values back into DOM styles for ball position/feedback.
+
+### 2.6 Return new hook API
+
+Still editing `src/hooks/useHandTracking.js`.
+
+Expose `ballRef`, `game`, and `resetGame`:
 
 ```js
 return {
@@ -296,17 +331,42 @@ return {
 
 Checkpoint:
 
-- Start game transitions to loading, searching, then tracking.
-- Ball reacts to pinch hits and score updates.
+- You can start/stop game.
+- Ball appears and updates.
+- Score and lives can change.
 
-## Step 3: Build Stage UI in src/components/TrackingStage.jsx
+Test now (before continuing):
 
-Goal: Render webcam, landmarks, puck, ball, and stage HUD.
+1. Click `Start game`.
+2. Confirm the ball is visible.
+3. Confirm pinch near the ball increases score.
+4. Confirm missing the ball decreases lives.
+
+Debug tip:
+
+- If the ball is invisible, check `placeBall`, `hideBall`, and `data-visible` styles.
+- If the ball moves but score does not change, check pinch threshold and hit distance.
+
+## Step 3: Add Ball + HUD to Stage (src/components/TrackingStage.jsx)
+
+File you edit in this step: `src/components/TrackingStage.jsx`.
+
+Action now: Open `src/components/TrackingStage.jsx` and update the component with the code below.
+
+In the template, stage renders webcam, landmarks, puck, and start button.
+
+In Air Juggler, stage also renders:
+
+- Ball element
+- In-stage score box
+- Button text `Start game`
+
+The stage is your real-time scene.
+Everything that feels live to the player belongs here.
+
+### Change
 
 ```jsx
-import Webcam from "react-webcam";
-import { VIDEO_CONSTRAINTS } from "../handTracking";
-
 export function TrackingStage({
   ballRef,
   canvasRef,
@@ -332,7 +392,6 @@ export function TrackingStage({
           videoConstraints={VIDEO_CONSTRAINTS}
         />
       )}
-
       <canvas ref={canvasRef} className="landmark-layer" aria-hidden="true" />
       <div ref={ballRef} className="game-ball" aria-hidden="true"></div>
       <div ref={puckRef} className="control-object" role="img" aria-label="Puck">
@@ -358,11 +417,37 @@ export function TrackingStage({
 
 Checkpoint:
 
-- The stage starts camera correctly and shows live score/lives.
+- Stage now shows score/lives and a game ball.
 
-## Step 4: Build Control Panel in src/components/ControlPanel.jsx
+Test now (before continuing):
 
-Goal: Show metrics and controls outside the stage.
+1. Start the game.
+2. Confirm stage HUD values (`Score`, `Lives`) render and update.
+3. Confirm `Start game` overlay only appears when not running.
+
+If score updates in the panel but not on stage, verify you pass `game` into `TrackingStage`.
+
+## Step 4: Replace Metrics and Add Reset Button (src/components/ControlPanel.jsx)
+
+File you edit in this step: `src/components/ControlPanel.jsx`.
+
+Action now: Open `src/components/ControlPanel.jsx` and apply the changes below.
+
+In the template, panel shows hand/gesture/confidence/pinch.
+
+In Air Juggler, panel changes to game metrics:
+
+- Score
+- Lives
+- Best
+- Gesture
+
+It also adds a `New round` button.
+
+You are shifting the panel from "tracking diagnostics" to "game dashboard".
+This is why hand/confidence/pinch metrics are removed here.
+
+### Change
 
 ```jsx
 export function ControlPanel({ game, isLoading, isRunning, onResetGame, onStartCamera, onStopCamera, tracking }) {
@@ -393,158 +478,145 @@ export function ControlPanel({ game, isLoading, isRunning, onResetGame, onStartC
     </aside>
   );
 }
-
-function Metric({ label, value }) {
-  return (
-    <div className="metric">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function getCameraButtonLabel(isRunning, isLoading) {
-  if (isRunning) return "Stop game";
-  if (isLoading) return "Loading...";
-  return "Start game";
-}
 ```
+
+Also remove old `formatPercent` logic.
 
 Checkpoint:
 
-- Buttons and metrics always reflect current game state.
+- Panel reflects game stats instead of pure tracking diagnostics.
 
-## Step 5: Compose in src/App.jsx
+Test now (before continuing):
 
-Goal: Wire the hook to the UI components.
+1. Confirm panel shows `Score`, `Lives`, `Best`, and `Gesture`.
+2. Confirm `New round` is disabled when game is not running.
+3. Start the game and confirm `New round` becomes enabled.
+
+If `New round` never enables, verify `disabled={!isRunning || isLoading}` logic.
+
+## Step 5: Wire New Props in App (src/App.jsx)
+
+File you edit in this step: `src/App.jsx`.
+
+Action now: Open `src/App.jsx` and update the imports, hook destructuring, and component props.
+
+In the template, App only passes tracking refs and camera actions.
+
+In Air Juggler, App additionally passes:
+
+- `ballRef`
+- `game`
+- `resetGame`
+
+App should stay a composition layer.
+Keep game logic inside the hook, and keep display logic in components.
+
+### Change
 
 ```jsx
-import { ControlPanel } from "./components/ControlPanel";
-import { StatusPill } from "./components/StatusPill";
-import { TrackingStage } from "./components/TrackingStage";
-import { useHandTracking } from "./hooks/useHandTracking";
-import "./App.css";
-
-function App() {
-  const {
-    ballRef,
-    canvasRef,
-    game,
-    handleCameraError,
-    handleCameraReady,
-    isLoading,
-    isRunning,
-    puckRef,
-    resetGame,
-    startCamera,
-    stopCamera,
-    tracking,
-    webcamRef
-  } = useHandTracking();
-
-  return (
-    <main className="app-shell">
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">Webcam mini game</p>
-          <h1>Air Juggler</h1>
-        </div>
-        <StatusPill mode={tracking.mode} label={tracking.label} />
-      </header>
-
-      <section className="workspace" aria-label="Air juggler game area">
-        <TrackingStage
-          ballRef={ballRef}
-          canvasRef={canvasRef}
-          game={game}
-          onCameraError={handleCameraError}
-          onCameraReady={handleCameraReady}
-          isLoading={isLoading}
-          isRunning={isRunning}
-          onStartCamera={startCamera}
-          puckRef={puckRef}
-          webcamRef={webcamRef}
-        />
-
-        <ControlPanel
-          game={game}
-          isLoading={isLoading}
-          isRunning={isRunning}
-          onResetGame={resetGame}
-          onStartCamera={startCamera}
-          onStopCamera={stopCamera}
-          tracking={tracking}
-        />
-      </section>
-    </main>
-  );
-}
-
-export default App;
+const {
+  ballRef,
+  canvasRef,
+  game,
+  handleCameraError,
+  handleCameraReady,
+  isLoading,
+  isRunning,
+  puckRef,
+  resetGame,
+  startCamera,
+  stopCamera,
+  tracking,
+  webcamRef
+} = useHandTracking();
 ```
+
+```jsx
+<TrackingStage
+  ballRef={ballRef}
+  canvasRef={canvasRef}
+  game={game}
+  onCameraError={handleCameraError}
+  onCameraReady={handleCameraReady}
+  isLoading={isLoading}
+  isRunning={isRunning}
+  onStartCamera={startCamera}
+  puckRef={puckRef}
+  webcamRef={webcamRef}
+/>
+
+<ControlPanel
+  game={game}
+  isLoading={isLoading}
+  isRunning={isRunning}
+  onResetGame={resetGame}
+  onStartCamera={startCamera}
+  onStopCamera={stopCamera}
+  tracking={tracking}
+/>
+```
+
+Also update labels:
+
+- `Webcam control` -> `Webcam mini game`
+- `Hand Puck` -> `Air Juggler`
 
 Checkpoint:
 
-- `App` stays as composition only, with no gameplay logic.
+- App renders full game layout and all props are connected.
 
-## Step 6: Style the Game in src/App.css
+Test now (before continuing):
 
-Goal: Match the final game look and responsive behavior.
+1. Start and stop the game from the panel button.
+2. Confirm stage and panel both update from the same game state.
+3. Confirm no `undefined` errors in the browser console.
 
-### 6.1 Layout example
+If you get `undefined` prop errors, compare your hook return object and App destructuring side by side.
+
+## Step 6: Add Game Visual Styles (src/App.css)
+
+File you edit in this step: `src/App.css`.
+
+Action now: Open `src/App.css` and add/update the styles in this step.
+
+In the template, CSS styles stage and puck only.
+
+In Air Juggler, add styles for:
+
+- `.stage-score`
+- `.game-ball`
+- `.game-ball[data-visible="true"]`
+- `.game-ball[data-hit="true"]`
+- `.camera-button.secondary`
+
+These styles do more than look nice:
+
+- `.game-ball` and data attributes are part of gameplay feedback.
+- `.stage-score` gives immediate in-context status while playing.
+- Secondary button styling communicates that `New round` is not the primary action.
+
+Update layout grid to support one extra control button:
 
 ```css
-.app-shell {
-  width: min(1180px, calc(100% - 32px));
-  min-height: 100svh;
-  margin: 0 auto;
-  padding: 28px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 250px;
-  gap: 16px;
+.control-panel {
+  grid-template-rows: repeat(4, minmax(72px, auto)) auto auto;
 }
 ```
 
-### 6.2 Stage, puck, and ball example
+And at tablet width:
 
 ```css
-.stage {
-  position: relative;
-  min-height: 420px;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+@media (max-width: 880px) {
+  .control-panel {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: auto auto auto;
+  }
 }
+```
 
-.webcam-feed,
-.landmark-layer {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scaleX(-1);
-}
+Example ball style:
 
-.control-object {
-  --x: 50%;
-  --y: 50%;
-  --scale: 1;
-  --rotate: 0deg;
-
-  position: absolute;
-  left: var(--x);
-  top: var(--y);
-  transform: translate(-50%, -50%) rotate(var(--rotate)) scale(var(--scale));
-}
-
+```css
 .game-ball {
   --x: 50%;
   --y: 24%;
@@ -552,68 +624,38 @@ Goal: Match the final game look and responsive behavior.
   position: absolute;
   left: var(--x);
   top: var(--y);
+  z-index: 4;
+  width: clamp(24px, 3vw, 34px);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #ffffff 0%, #ffffff 24%, #f06a57 68%);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
   transform: translate(-50%, -50%);
   opacity: 0;
-}
-
-.game-ball[data-visible="true"] {
-  opacity: 1;
-}
-```
-
-### 6.3 Responsive example
-
-```css
-@media (max-width: 880px) {
-  .workspace {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 560px) {
-  .stage {
-    aspect-ratio: 3 / 4;
-  }
 }
 ```
 
 Checkpoint:
 
-- The game remains playable and aligned on desktop and mobile.
+- Ball appears/disappears with state.
+- Hit animation is visible.
+- `New round` button styling is distinct.
 
-## Step 7: Validate With QA
+Test now (before finishing):
 
-Run:
+1. Confirm stage, panel, and controls look correct on desktop.
+2. Resize to mobile width and confirm layout still works.
+3. Confirm ball hit animation and score HUD are still visible.
 
-```bash
-npm run lint
-npm run build
-```
+If ball position looks wrong, verify CSS vars `--x` and `--y` are being set in `updateBallElement`.
 
-Manual test checklist:
+## Why This Guide Is Accurate
 
-1. Deny camera permission and confirm error status.
-2. Start game and confirm loading then searching.
-3. Show your hand and confirm landmarks + puck tracking.
-4. Pinch near the ball and confirm score increases.
-5. Miss the ball and confirm lives decrease.
-6. Lose all lives and confirm round reset with best score preserved.
-7. Stop game and confirm frame loop stops and canvas clears.
-8. Click New round while running and confirm score/lives reset.
+This guide follows the exact implementation used for the Air Juggler version of this project.
 
-## Optional README Deliverable
+Use this guide as an implementation path, not just a copy path:
 
-In README.md, add:
-
-1. What you implemented in each file.
-2. One improvement idea you would add next.
-3. Any known edge cases.
-
-## Done Criteria
-
-You are done when:
-
-1. You changed the six implementation files listed in this guide.
-2. Your gameplay behavior matches Air Juggler.
-3. Lint and build both pass.
-4. All manual tests pass.
+- Implement one step.
+- Run the app.
+- Confirm the checkpoint.
+- Continue only when that step works.
