@@ -38,9 +38,10 @@ Step-to-file map:
 - Step 1 -> `src/gestures.js`
 - Step 2 -> `src/hooks/useHandTracking.js`
 - Step 3 -> `src/components/TrackingStage.jsx`
+- Step 3.5 -> `src/App.css` (add essential styling)
 - Step 4 -> `src/components/ControlPanel.jsx`
 - Step 5 -> `src/App.jsx`
-- Step 6 -> `src/App.css`
+- Step 6 -> `src/App.css` (add final styling and responsive refinements)
 
 ## Step 0: Create and Run the Template
 
@@ -159,7 +160,7 @@ File you edit in this step: `src/hooks/useHandTracking.js`.
 Action now: Open `src/hooks/useHandTracking.js`.
 All substeps in Step 2 are changes in this same file.
 
-This is the biggest change in the commit.
+This is the biggest change in the project.
 
 In the template, this hook tracks hand state only.
 In Air Juggler, it also manages a ball game loop (score, lives, collisions).
@@ -427,6 +428,66 @@ Test now (before continuing):
 
 If score updates in the panel but not on stage, verify you pass `game` into `TrackingStage`.
 
+## Step 3.5: Add Essential CSS Early (src/App.css)
+
+File you edit in this step: `src/App.css`.
+
+Action now: Open `src/App.css` and add the essential styles below before continuing.
+
+In this step, you are explicitly adding styling (visual CSS), not changing game logic.
+
+Why now:
+
+- You get immediate visual feedback while building the rest of the logic.
+- The ball and HUD become visible early, which makes debugging much easier.
+
+Add at least these essential rules:
+
+```css
+.stage {
+  position: relative;
+  min-height: 420px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+.stage-score {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
+}
+
+.game-ball {
+  --x: 50%;
+  --y: 24%;
+
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  z-index: 4;
+  width: clamp(24px, 3vw, 34px);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+
+.game-ball[data-visible="true"] {
+  opacity: 1;
+}
+
+.game-ball[data-hit="true"] {
+  transform: translate(-50%, -50%) scale(1.18);
+}
+```
+
+Test now (before continuing):
+
+1. Start the game.
+2. Confirm the ball can be seen.
+3. Confirm score/lives text is visible on stage.
+
 ## Step 4: Replace Metrics and Add Reset Button (src/components/ControlPanel.jsx)
 
 File you edit in this step: `src/components/ControlPanel.jsx`.
@@ -577,7 +638,9 @@ If you get `undefined` prop errors, compare your hook return object and App dest
 
 File you edit in this step: `src/App.css`.
 
-Action now: Open `src/App.css` and add/update the styles in this step.
+Action now: Stay in `src/App.css` and finish the full styling and responsive polish.
+
+In this step, you continue adding styling to complete the final look and responsive behavior.
 
 In the template, CSS styles stage and puck only.
 
@@ -649,9 +712,7 @@ Test now (before finishing):
 
 If ball position looks wrong, verify CSS vars `--x` and `--y` are being set in `updateBallElement`.
 
-## Why This Guide Is Accurate
-
-This guide follows the exact implementation used for the Air Juggler version of this project.
+## How to Use This Guide Well
 
 Use this guide as an implementation path, not just a copy path:
 
@@ -659,3 +720,11 @@ Use this guide as an implementation path, not just a copy path:
 - Run the app.
 - Confirm the checkpoint.
 - Continue only when that step works.
+
+If you get stuck, return to the Big Picture section and find which part of the pipeline is failing:
+
+- Webcam input
+- Landmark detection
+- Gesture values
+- Game physics
+- UI rendering
