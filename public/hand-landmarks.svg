@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1380" height="500" viewBox="0 0 1380 500" role="img" aria-labelledby="title description">
+  <title id="title">MediaPipe hand landmark numbers</title>
+  <description id="description">A hand diagram with numbered landmarks from 0 to 20 and their landmark names.</description>
+  <rect width="1380" height="500" fill="#ffffff" />
+
+  <g fill="none" stroke="#00e000" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M250 430 L160 365 L120 300 L80 250 L30 210" />
+    <path d="M250 430 L180 220 L160 160 L140 105 L120 50" />
+    <path d="M180 220 L250 210 L300 220 L360 275" />
+    <path d="M250 210 L250 140 L250 75 L255 20" />
+    <path d="M300 220 L315 160 L330 105 L335 48" />
+    <path d="M250 430 L360 275 L405 230 L435 185 L470 140" />
+  </g>
+
+  <g fill="#ff0000">
+    <circle cx="250" cy="430" r="9" />
+    <circle cx="160" cy="365" r="9" />
+    <circle cx="120" cy="300" r="9" />
+    <circle cx="80" cy="250" r="9" />
+    <circle cx="30" cy="210" r="9" />
+    <circle cx="180" cy="220" r="9" />
+    <circle cx="160" cy="160" r="9" />
+    <circle cx="140" cy="105" r="9" />
+    <circle cx="120" cy="50" r="9" />
+    <circle cx="250" cy="210" r="9" />
+    <circle cx="250" cy="140" r="9" />
+    <circle cx="250" cy="75" r="9" />
+    <circle cx="255" cy="20" r="9" />
+    <circle cx="300" cy="220" r="9" />
+    <circle cx="315" cy="160" r="9" />
+    <circle cx="330" cy="105" r="9" />
+    <circle cx="335" cy="48" r="9" />
+    <circle cx="360" cy="275" r="9" />
+    <circle cx="405" cy="230" r="9" />
+    <circle cx="435" cy="185" r="9" />
+    <circle cx="470" cy="140" r="9" />
+  </g>
+
+  <g font-family="Arial, sans-serif" font-size="26" fill="#000000">
+    <text x="268" y="442">0</text>
+    <text x="136" y="382">1</text>
+    <text x="96" y="317">2</text>
+    <text x="56" y="267">3</text>
+    <text x="0" y="222">4</text>
+    <text x="148" y="230">5</text>
+    <text x="132" y="160">6</text>
+    <text x="110" y="112">7</text>
+    <text x="86" y="58">8</text>
+    <text x="260" y="207">9</text>
+    <text x="200" y="144">10</text>
+    <text x="200" y="84">11</text>
+    <text x="205" y="31">12</text>
+    <text x="275" y="262">13</text>
+    <text x="340" y="175">14</text>
+    <text x="350" y="120">15</text>
+    <text x="355" y="62">16</text>
+    <text x="365" y="318">17</text>
+    <text x="425" y="248">18</text>
+    <text x="455" y="200">19</text>
+    <text x="490" y="152">20</text>
+  </g>
+
+  <g font-family="Arial, sans-serif" font-size="31" fill="#000000">
+    <text x="560" y="55">0. WRIST</text>
+    <text x="560" y="93">1. THUMB_CMC</text>
+    <text x="560" y="131">2. THUMB_MCP</text>
+    <text x="560" y="169">3. THUMB_IP</text>
+    <text x="560" y="207">4. THUMB_TIP</text>
+    <text x="560" y="245">5. INDEX_FINGER_MCP</text>
+    <text x="560" y="283">6. INDEX_FINGER_PIP</text>
+    <text x="560" y="321">7. INDEX_FINGER_DIP</text>
+    <text x="560" y="359">8. INDEX_FINGER_TIP</text>
+    <text x="560" y="397">9. MIDDLE_FINGER_MCP</text>
+    <text x="560" y="435">10. MIDDLE_FINGER_PIP</text>
+
+    <text x="960" y="55">11. MIDDLE_FINGER_DIP</text>
+    <text x="960" y="93">12. MIDDLE_FINGER_TIP</text>
+    <text x="960" y="131">13. RING_FINGER_MCP</text>
+    <text x="960" y="169">14. RING_FINGER_PIP</text>
+    <text x="960" y="207">15. RING_FINGER_DIP</text>
+    <text x="960" y="245">16. RING_FINGER_TIP</text>
+    <text x="960" y="283">17. PINKY_MCP</text>
+    <text x="960" y="321">18. PINKY_PIP</text>
+    <text x="960" y="359">19. PINKY_DIP</text>
+    <text x="960" y="397">20. PINKY_TIP</text>
+  </g>
+</svg>
